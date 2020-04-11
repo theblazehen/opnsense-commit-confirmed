@@ -1,0 +1,26 @@
+#!/bin/bash
+
+trap true HUP
+
+if [ "$1" == "confirmed" ]; then
+    {
+        cp /conf/config.xml /tmp/config.xml.bak
+        echo -n $$ > /run/commit-after.pid # So we can kill it later
+
+        let timetosleep="$2*60"
+        sleep $timetosleep
+        
+        if [ $? == 0 ]; then
+            #we didn't get killed
+            cp /tmp/config.xml.bak /conf/config.xml
+            reboot
+        fi
+    } & disown #run in background
+fi
+
+if [ "$2" == "confirm" ]; then
+    kill $(cat /run/commit-after.pid)
+    rm /run/commit-after.pid /tmp/config.xml.bak
+fi
+
+
